@@ -2,7 +2,7 @@
   "target_name": "HD74156",
   "data_file": "data/hd74156rv.txt",
   "model_type": "MPRVModel",
-  "num_planets": 1,
+  "num_planets": 2,
   "num_particles": 1,
   "new_level_interval": 50000,
   "save_interval": 10000,

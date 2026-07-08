@@ -41,22 +41,6 @@ double RVModel::kepler_solve(double M, double e) const
     return E;
 }
 
-// OLD caulculate_mu()
-// void RVModel::calculate_mu()
-// {
-//     const auto& t = Data::get_instance().get_x();
-//     const auto& set_idx = Data::get_instance().get_instrument();
-//     if(mu_model.size() != t.size()) 
-//         mu_model.resize(t.size());
-    
-//     for(size_t i = 0; i < t.size(); i++)    
-//     {
-//         int inst = static_cast<int>(set_idx[i]);
-//         mu_model[i] = gamma[inst] + K * cos(2.0 * M_PI * t[i] / T + phi);
-//     }
-// }
-
-// NEW calculate_mu()
 void RVModel::calculate_mu()
 {
     const auto& t = Data::get_instance().get_x();
@@ -93,8 +77,9 @@ void RVModel::from_prior(DNest4::RNG& rng)
         sigma[i] = exp(log(0.01) + log(10000.0) * rng.rand());
     }
     // semi-amplitude
-    K = 1e2 * rng.rand();
-    // log uniform from 1 to 10 days
+    // K = 1e2 * rng.rand();
+    K = exp(log(1.0) + log(1000.0) * rng.rand());
+    // log uniform from 1 to 1000 days
     T = exp(log(1.0) + log(1000.0) * rng.rand());
     // phase from 0 to 2 pi
     phi = 2 * M_PI * rng.rand();
@@ -124,8 +109,12 @@ double RVModel::perturb(RNG& rng)
     }
     else if(which == 1) // semi amplitude
     {
-        K += 100.0 * rng.randh();
-        wrap(K, 0.0, 100.0);
+        // K += 100.0 * rng.randh();
+        // wrap(K, 0.0, 100.0);
+        K = log(K);
+        K += log(1000.0) * rng.randh();
+        wrap(K, log(1.0), log(1000.0));
+        K = exp(K);
     }
     else if(which == 2) // period
     {

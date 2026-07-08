@@ -44,6 +44,8 @@ f"{cfg['model_type']}.cpp",
     os.makedirs(run_dir, exist_ok=True)
     print(f"Making run directory targeting {cfg['target_name']} using data {cfg['data_file']}")
     print(f"Created run directory: {run_dir}")
+    os.makedirs(f"{run_dir}/images")
+    print(f"Created images directory: {run_dir}/images")
 
     # copy data file into run dir
     print("Starting file copies")
@@ -107,5 +109,6 @@ if __name__ == "__main__":
     current_run_dir = create_run_environment(cfg)
     generate_options_file(current_run_dir, cfg)
     print(f"Success! New run created at {current_run_dir}")
-
+    # print(f"Copied {current_run_dir[5:]} to clipboard!")
+    # pyperclip.copy(current_run_dir[5:])
     print("=============================")
