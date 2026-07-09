@@ -42,7 +42,7 @@ f"{cfg['model_type']}.cpp",
 
     # make directory
     os.makedirs(run_dir, exist_ok=True)
-    print(f"Making run directory targeting {cfg['target_name']} using data {cfg['data_file']}")
+    print(f"Making run directory targeting {cfg['target_name']} using {cfg['data_file']}")
     print(f"Created run directory: {run_dir}")
     os.makedirs(f"{run_dir}/images")
     print(f"Created images directory: {run_dir}/images")
@@ -57,8 +57,8 @@ f"{cfg['model_type']}.cpp",
         print(f"Data file {data_source} not found")
 
     if os.path.exists("config.json"):
-        shutil.copy("config.json", os.path.join(run_dir, f"{timestamp}_config.json"))
-        print(f"Successfully copied config file")
+        shutil.copy("config.json", os.path.join(run_dir, f"config.json"))
+        print(f"Copied config file")
     else:
         print(f"Config file not found")
 
@@ -78,6 +78,10 @@ f"{cfg['model_type']}.cpp",
         print("Compilation success")
     except subprocess.CalledProcessError:
         print("Compilation failed")
+        shutil.rmtree(run_dir)
+        print(f"Run directory {run_dir} removed")
+        print("=============================")
+        sys.exit(1)
 
     return run_dir
 

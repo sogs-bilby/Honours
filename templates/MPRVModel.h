@@ -9,7 +9,6 @@
 class MPRVModel
 {
 	private:
-		int num_planets = 2;
 		double log_S0;
 		double log_w0;
 		double log_Q;
@@ -33,6 +32,7 @@ class MPRVModel
 		double kepler_solve(double M, double e) const;
 
 	public:
+		static int num_planets;
 		// Constructor
 		MPRVModel();
 		// Generate the point from the prior

@@ -8,6 +8,8 @@
 
 #include <Eigen/Dense>
 
+int MPRVModel::num_planets = 2;
+
 using namespace std;
 using namespace DNest4;
 
@@ -193,86 +195,86 @@ double MPRVModel::perturb(RNG& rng)
     return log_H;
 }
 
-double MPRVModel::log_likelihood() const
-{
-    const auto& y = Data::get_instance().get_y();
-    const auto& err = Data::get_instance().get_err();
-    const auto& instr = Data::get_instance().get_instr();
-
-    double logl = 0.0;
-	for(size_t i=0; i < y.size(); ++i) {
-        double mu = mu_model[i] + gamma[instr[i]];
-        double var = (err[i] * err[i]) + (sigma[instr[i]] * sigma[instr[i]]);
-		logl += -0.5*log(2*M_PI*var) - 0.5*pow(y[i] - mu, 2)/var;
-    }
-	return logl;
-}
-
 // double MPRVModel::log_likelihood() const
 // {
-//     const auto& t = Data::get_instance().get_x();
 //     const auto& y = Data::get_instance().get_y();
 //     const auto& err = Data::get_instance().get_err();
 //     const auto& instr = Data::get_instance().get_instr();
 
-//     int N = t.size();
-    
-//     Eigen::VectorXd t_arr(N);
-//     Eigen::VectorXd res_arr(N);
-//     Eigen::VectorXd diag_arr(N);
-
-//     for(int i = 0; i < N; i++) {
-//         t_arr(i) = t[i];
+//     double logl = 0.0;
+// 	for(size_t i=0; i < y.size(); ++i) {
 //         double mu = mu_model[i] + gamma[instr[i]];
-//         res_arr(i) = y[i] - mu;
-//         // White noise variance (instrument error^2 + stellar jitter^2)
-//         diag_arr(i) = (err[i] * err[i]) + (sigma[instr[i]] * sigma[instr[i]]);
+//         double var = (err[i] * err[i]) + (sigma[instr[i]] * sigma[instr[i]]);
+// 		logl += -0.5*log(2*M_PI*var) - 0.5*pow(y[i] - mu, 2)/var;
 //     }
-
-//     double S0 = exp(log_S0);
-//     double w0 = exp(log_w0);
-//     double Q = exp(log_Q);
-
-//     // Initialize the templated SHO term
-//     celerite2::SHOTerm<double> term(S0, w0, Q);
-    
-//     // This returns a std::tuple containing: {c, a, U, V}
-//     auto matrices = term.get_celerite_matrices(t_arr, diag_arr);
-    
-//     // Unpack the tuple references cleanly without copying any memory
-//     const auto& c = std::get<0>(matrices);
-//     const auto& a = std::get<1>(matrices);
-//     const auto& U = std::get<2>(matrices);
-//     const auto& V = std::get<3>(matrices);
-    
-//     // Match the exact Row-Major layout and fixed width (2) provided by celerite2
-//     Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor> W(N, 2);
-//     Eigen::VectorXd d(N);
-    
-//     // Define the execution workspaces explicitly as Row-Major
-//     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> O_N_factor_work(N, 4); // J*J = 4
-//     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> O_N_solve_work(N, 2);  // J = 2
-
-//     // O(N) Cholesky Factorization
-//     int flag = celerite2::core::factor(t_arr, c, a, U, V, d, W, O_N_factor_work);
-    
-//     // Catch mathematical anomalies and reject the step safely
-//     if (flag != 0 || (d.array() <= 0.0).any()) {
-//         return -1e300; 
-//     }
-
-//     // O(N) Solver: (L * D * L^T) * alpha = res_arr
-//     Eigen::VectorXd alpha = res_arr;
-//     celerite2::core::solve_lower(t_arr, c, U, W, alpha, alpha, O_N_solve_work);
-//     alpha = alpha.array() / d.array();
-//     celerite2::core::solve_upper(t_arr, c, U, W, alpha, alpha, O_N_solve_work);
-
-//     // Final Log-Likelihood combination
-//     double log_det = d.array().log().sum();
-//     double chi_squared = res_arr.dot(alpha);
-    
-//     return -0.5 * chi_squared - 0.5 * log_det - 0.5 * N * std::log(2.0 * M_PI);
+// 	return logl;
 // }
+
+double MPRVModel::log_likelihood() const
+{
+    const auto& t = Data::get_instance().get_x();
+    const auto& y = Data::get_instance().get_y();
+    const auto& err = Data::get_instance().get_err();
+    const auto& instr = Data::get_instance().get_instr();
+
+    int N = t.size();
+    
+    Eigen::VectorXd t_arr(N);
+    Eigen::VectorXd res_arr(N);
+    Eigen::VectorXd diag_arr(N);
+
+    for(int i = 0; i < N; i++) {
+        t_arr(i) = t[i];
+        double mu = mu_model[i] + gamma[instr[i]];
+        res_arr(i) = y[i] - mu;
+        // White noise variance (instrument error^2 + stellar jitter^2)
+        diag_arr(i) = (err[i] * err[i]) + (sigma[instr[i]] * sigma[instr[i]]);
+    }
+
+    double S0 = exp(log_S0);
+    double w0 = exp(log_w0);
+    double Q = exp(log_Q);
+
+    // Initialize the templated SHO term
+    celerite2::SHOTerm<double> term(S0, w0, Q);
+    
+    // This returns a std::tuple containing: {c, a, U, V}
+    auto matrices = term.get_celerite_matrices(t_arr, diag_arr);
+    
+    // Unpack the tuple references cleanly without copying any memory
+    const auto& c = std::get<0>(matrices);
+    const auto& a = std::get<1>(matrices);
+    const auto& U = std::get<2>(matrices);
+    const auto& V = std::get<3>(matrices);
+    
+    // Match the exact Row-Major layout and fixed width (2) provided by celerite2
+    Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor> W(N, 2);
+    Eigen::VectorXd d(N);
+    
+    // Define the execution workspaces explicitly as Row-Major
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> O_N_factor_work(N, 4); // J*J = 4
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> O_N_solve_work(N, 2);  // J = 2
+
+    // O(N) Cholesky Factorization
+    int flag = celerite2::core::factor(t_arr, c, a, U, V, d, W, O_N_factor_work);
+    
+    // Catch mathematical anomalies and reject the step safely
+    if (flag != 0 || (d.array() <= 0.0).any()) {
+        return -1e300; 
+    }
+
+    // O(N) Solver: (L * D * L^T) * alpha = res_arr
+    Eigen::VectorXd alpha = res_arr;
+    celerite2::core::solve_lower(t_arr, c, U, W, alpha, alpha, O_N_solve_work);
+    alpha = alpha.array() / d.array();
+    celerite2::core::solve_upper(t_arr, c, U, W, alpha, alpha, O_N_solve_work);
+
+    // Final Log-Likelihood combination
+    double log_det = d.array().log().sum();
+    double chi_squared = res_arr.dot(alpha);
+    
+    return -0.5 * chi_squared - 0.5 * log_det - 0.5 * N * std::log(2.0 * M_PI);
+}
 
 void MPRVModel::print(std::ostream& out) const
 {
