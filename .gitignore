@@ -18,3 +18,7 @@ venv/
 .vscode/
 .idea/
 *.swp
+
+*.RData
+*.Rhistory
+*.Rapp.history
