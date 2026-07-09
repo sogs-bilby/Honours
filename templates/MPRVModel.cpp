@@ -2,7 +2,9 @@
 #include "MPRVModel.h"
 #include "DNest4.h"
 #include <cmath>
-#include <string>
+#include <Eigen/Core>
+#include <celerite2/celerite2.h>
+#include <celerite2/terms.hpp>
 
 using namespace std;
 using namespace DNest4;
