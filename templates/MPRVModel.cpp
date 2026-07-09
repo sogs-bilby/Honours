@@ -99,6 +99,11 @@ void MPRVModel::from_prior(DNest4::RNG& rng)
         }
         omega[j] = 2.0 * M_PI * rng.rand();
     }
+
+    log_S0 = -20.0 + rng.rand() * 40.0;
+    log_w0 = -5.0 + rng.rand() * 10.0;
+    log_Q = -0.34 + rng.rand() * 6.0;
+    
     calculate_mu();
 }
 
@@ -110,7 +115,7 @@ double MPRVModel::perturb(RNG& rng)
     // cout << to_string(mean_rv);
     // 5 standard parameters: semi-amplitude, period, phase, eccentricity and omega
     // n gamma offsets and n sigmas where n in number of instruments
-    int which = rng.rand_int(7);
+    int which = rng.rand_int(10); // now 10 to match the 3 new SHO terms
     int j = rng.rand_int(num_planets); // choose which planet's params to perturb
 
     if(which == 0) // offset
@@ -156,13 +161,28 @@ double MPRVModel::perturb(RNG& rng)
         omega[j] += 2.0 * M_PI * rng.randh();
         wrap(omega[j], 0.0, 2.0 * M_PI);
     }
-    else if(which >= 6) // sigma
+    else if(which == 6) // sigma
     {
         int idx = rng.rand_int(num_instr);
         sigma[idx] = log(sigma[idx]);
         sigma[idx] += log(10000.0) * rng.randh(); 
         wrap(sigma[idx], log(0.01), log(100.0));
         sigma[idx] = exp(sigma[idx]);
+    }
+    else if(which == 7) // log_S0
+    {
+        log_S0 += 40.0 * rng.randh();
+        wrap(log_S0, -20.0, 20.0);
+    }
+    else if(which == 8) // log_w0
+    {
+        log_w0 += 10.0 * rng.randh();
+        wrap(log_w0, -5.0, 5.0);
+    }
+    else if(which == 9) // log_Q
+    {
+        log_Q += 6.0 * rng.randh();
+        wrap(log_Q, -0.34, 5.66); 
     }
 
     if(which < 6)
@@ -189,17 +209,23 @@ double MPRVModel::log_likelihood() const
 void MPRVModel::print(std::ostream& out) const
 {
     // write all 7 parameters to sample.txt
+    // offsets
     for (size_t i = 0; i < gamma.size(); i++) {
         out << gamma[i] << " ";
     }
 
+    // params
     for (int j = 0; j < num_planets; j++) {
         out << ' ' << K[j] << ' ' << T[j] << ' ' << phi[j] << ' ' << ecc[j] << ' ' << omega[j] << ' ';
     }
 
+    // sigmas
     for (size_t i = 0; i < (sigma.size()); i++) {
         out << sigma[i] << " ";
     }
+
+    // SHO terms
+    out << log_S0 << " " << log_w0 << " " << log_Q << " ";
 }
 
 string MPRVModel::description() const
@@ -222,5 +248,9 @@ string MPRVModel::description() const
     for (int i = 0; i < num_instr; i++) {
         descr += "sigma_" + to_string(i) + ", ";
     }
+    
+    // SHO terms
+    descr += "log_S0, log_w0, log_Q, ";
+
     return descr;
 }

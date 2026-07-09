@@ -10,6 +10,9 @@ class MPRVModel
 {
 	private:
 		int num_planets = 2;
+		double log_S0;
+		double log_w0;
+		double log_Q;
     
 		// instrument params
 		std::vector<double> gamma;
