@@ -92,8 +92,8 @@ void MPRVModel::from_prior(DNest4::RNG& rng)
     omega.resize(num_planets);
 
     for(int j=0; j<num_planets; j++) {
-        K[j] = exp(log(0.1) + log(100.0) * rng.rand());
-        T[j] = exp(log(0.1) + log(1000.0) * rng.rand());
+        K[j] = exp(log(0.1) + log(1000.0) * rng.rand());
+        T[j] = exp(log(0.1) + log(10000.0) * rng.rand());
         phi[j] = 2.0 * M_PI * rng.rand();
         while(true)
         {
@@ -132,14 +132,14 @@ double MPRVModel::perturb(RNG& rng)
     else if(which == 1) // semi amplitude
     {
         K[j] = log(K[j]);
-        K[j] += log(100.0) * rng.randh();
+        K[j] += log(1000.0) * rng.randh();
         wrap(K[j], log(0.1), log(100.0));
         K[j] = exp(K[j]);
     }
     else if(which == 2) // period
     {
         T[j] = log(T[j]); 
-        T[j] += log(1000.0) * rng.randh(); 
+        T[j] += log(10000.0) * rng.randh(); 
         wrap(T[j], log(0.1), log(1000.0)); 
         T[j] = exp(T[j]);
         
@@ -189,7 +189,7 @@ double MPRVModel::perturb(RNG& rng)
         wrap(log_Q, -0.34, 5.66); 
     }
 
-    if(which < 6)
+    if(which > 0 && which < 6)
         calculate_mu();
 
     return log_H;
